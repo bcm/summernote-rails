@@ -1,12 +1,12 @@
 /**
- * Super simple wysiwyg editor on Bootstrap v0.5.1
+ * Super simple wysiwyg editor on Bootstrap v0.5.2
  * http://hackerwins.github.io/summernote/
  *
  * summernote.js
  * Copyright 2013 Alan Hong. and outher contributors
  * summernote may be freely distributed under the MIT license./
  *
- * Date: 2014-03-16T06:23Z
+ * Date: 2014-04-26T04:47Z
  */
 (function (factory) {
   /* global define */
@@ -55,7 +55,7 @@
    */
   var agent = {
     bMac: navigator.appVersion.indexOf('Mac') > -1,
-    bMSIE: navigator.userAgent.indexOf('MSIE') > -1,
+    bMSIE: navigator.userAgent.indexOf('MSIE') > -1 || navigator.userAgent.indexOf('Trident') > -1,
     bFF: navigator.userAgent.indexOf('Firefox') > -1,
     jqueryVersion: parseFloat($.fn.jquery),
     bCodeMirror: !!CodeMirror
@@ -606,7 +606,7 @@
 
   var settings = {
     // version
-    version: '0.5.1',
+    version: '0.5.2',
 
     /**
      * options for init
@@ -617,7 +617,7 @@
 
       focus: false,                 // set focus after initilize summernote
 
-      tabsize: null,                // size of tab ex) 2 or 4
+      tabsize: 4,                   // size of tab ex) 2 or 4
       styleWithSpan: true,          // style with span (Chrome and FF)
 
       disableLinkTarget: false,     // hide link Target Checkbox
@@ -960,12 +960,13 @@
       var properties = ['font-family', 'font-size', 'text-align', 'list-style-type', 'line-height'];
       var oStyle = jQueryCSS($cont, properties) || {};
 
-      oStyle['font-size'] = parseInt(oStyle['font-size']);
+      oStyle['font-size'] = parseInt(oStyle['font-size'], 10);
 
       // document.queryCommandState for toggle state
       oStyle['font-bold'] = document.queryCommandState('bold') ? 'bold' : 'normal';
       oStyle['font-italic'] = document.queryCommandState('italic') ? 'italic' : 'normal';
       oStyle['font-underline'] = document.queryCommandState('underline') ? 'underline' : 'normal';
+      oStyle['font-strikethrough'] = document.queryCommandState('strikeThrough') ? 'strikethrough' : 'normal';
 
       // list-style-type to list-style(unordered, ordered)
       if (!rng.isOnList()) {
@@ -980,7 +981,7 @@
       if (elPara && elPara.style['line-height']) {
         oStyle['line-height'] = elPara.style.lineHeight;
       } else {
-        var lineHeight = parseInt(oStyle['line-height']) / parseInt(oStyle['font-size']);
+        var lineHeight = parseInt(oStyle['line-height'], 10) / parseInt(oStyle['font-size'], 10);
         oStyle['line-height'] = lineHeight.toFixed(1);
       }
 
@@ -1851,6 +1852,9 @@
       btnState('button[data-event="underline"]', function () {
         return oStyle['font-underline'] === 'underline';
       });
+      btnState('button[data-event="strikethrough"]', function () {
+        return oStyle['font-strikethrough'] === 'strikethrough';
+      });
       btnState('button[data-event="justifyLeft"]', function () {
         return oStyle['text-align'] === 'left' || oStyle['text-align'] === 'start';
       });
@@ -2036,9 +2040,7 @@
             $imageUrl = $dialog.find('.note-image-url'),
             $imageBtn = $dialog.find('.note-image-btn');
 
-        $imageDialog.one('shown.bs.modal', function (event) {
-          event.stopPropagation();
-
+        $imageDialog.one('shown.bs.modal', function () {
           // Cloning imageInput to clear element.
           $imageInput.replaceWith($imageInput.clone()
             .on('change', function () {
@@ -2057,9 +2059,7 @@
           $imageUrl.keyup(function () {
             toggleBtn($imageBtn, $imageUrl.val());
           }).val('').focus();
-        }).one('hidden.bs.modal', function (event) {
-          event.stopPropagation();
-
+        }).one('hidden.bs.modal', function () {
           $editable.focus();
           $imageInput.off('change');
           $imageUrl.off('keyup');
@@ -2081,9 +2081,7 @@
         var $videoUrl = $videoDialog.find('.note-video-url'),
             $videoBtn = $videoDialog.find('.note-video-btn');
 
-        $videoDialog.one('shown.bs.modal', function (event) {
-          event.stopPropagation();
-
+        $videoDialog.one('shown.bs.modal', function () {
           $videoUrl.val(videoInfo.text).keyup(function () {
             toggleBtn($videoBtn, $videoUrl.val());
           }).trigger('keyup').trigger('focus');
@@ -2094,9 +2092,7 @@
             $videoDialog.modal('hide');
             deferred.resolve($videoUrl.val());
           });
-        }).one('hidden.bs.modal', function (event) {
-          event.stopPropagation();
-
+        }).one('hidden.bs.modal', function () {
           $editable.focus();
           $videoUrl.off('keyup');
           $videoBtn.off('click');
@@ -2120,9 +2116,7 @@
         $linkBtn = $linkDialog.find('.note-link-btn'),
         $openInNewWindow = $linkDialog.find('input[type=checkbox]');
 
-        $linkDialog.one('shown.bs.modal', function (event) {
-          event.stopPropagation();
-
+        $linkDialog.one('shown.bs.modal', function () {
           $linkText.val(linkInfo.text);
 
           $linkUrl.keyup(function () {
@@ -2142,9 +2136,7 @@
             $linkDialog.modal('hide');
             deferred.resolve($linkUrl.val(), $openInNewWindow.is(':checked'));
           });
-        }).one('hidden.bs.modal', function (event) {
-          event.stopPropagation();
-
+        }).one('hidden.bs.modal', function () {
           $editable.focus();
           $linkUrl.off('keyup');
         }).modal('show');
@@ -2159,8 +2151,7 @@
     this.showHelpDialog = function ($editable, $dialog) {
       var $helpDialog = $dialog.find('.note-help-dialog');
 
-      $helpDialog.one('hidden.bs.modal', function (event) {
-        event.stopPropagation();
+      $helpDialog.one('hidden.bs.modal', function () {
         $editable.focus();
       }).modal('show');
     };
@@ -2775,6 +2766,9 @@
       underline: function (lang) {
         return '<button type="button" class="btn btn-default btn-sm btn-small" title="' + lang.font.underline + '" data-shortcut="Ctrl+U" data-mac-shortcut="⌘+U" data-event="underline" tabindex="-1"><i class="fa fa-underline icon-underline"></i></button>';
       },
+      strike: function (lang) {
+        return '<button type="button" class="btn btn-default btn-sm btn-small" title="' + lang.font.strike + '" data-event="strikethrough" tabindex="-1"><i class="fa fa-strikethrough icon-strikethrough"></i></button>';
+      },
       clear: function (lang) {
         return '<button type="button" class="btn btn-default btn-sm btn-small" title="' + lang.font.clear + '" data-shortcut="Ctrl+\\" data-mac-shortcut="⌘+\\" data-event="removeFormat" tabindex="-1"><i class="fa fa-eraser icon-eraser"></i></button>';
       },
@@ -3064,7 +3058,7 @@
                        '<a class="modal-close pull-right" aria-hidden="true" tabindex="-1">' + lang.shortcut.close + '</a>' +
                        '<div class="title">' + lang.shortcut.shortcuts + '</div>' +
                        (agent.bMac ? tplShortcutTable(lang, options) : replaceMacKeys(tplShortcutTable(lang, options))) +
-                       '<p class="text-center"><a href="//hackerwins.github.io/summernote/" target="_blank">Summernote 0.5.1</a> · <a href="//github.com/HackerWins/summernote" target="_blank">Project</a> · <a href="//github.com/HackerWins/summernote/issues" target="_blank">Issues</a></p>' +
+                       '<p class="text-center"><a href="//hackerwins.github.io/summernote/" target="_blank">Summernote 0.5.2</a> · <a href="//github.com/HackerWins/summernote" target="_blank">Project</a> · <a href="//github.com/HackerWins/summernote/issues" target="_blank">Issues</a></p>' +
                      '</div>' +
                    '</div>' +
                  '</div>' +
